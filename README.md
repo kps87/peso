@@ -1,6 +1,6 @@
-# PESO
+# PESO [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14633225.svg)](https://doi.org/10.5281/zenodo.14633225)
 
-A Simple Potential Energy Surface Diagram Generator
+A Simple Potential Energy Surface Diagram Generator. 
 
 ![Animation](peso.gif)
 
@@ -20,6 +20,7 @@ A Simple Potential Energy Surface Diagram Generator
     - [Global Colormaps](#global-colormaps)
 - [PES Logic](#pes-logic)
 - [Contributing](#contributing)
+- [Citing](#citing)
 - [License](#license)
 
 ## Installation
@@ -270,6 +271,11 @@ and a harmonic curve is drawn for each component, giving a pleasing visual repre
 ## Contributing
 
 Pull requests and feature requests are welcome.
+
+## Citing
+If you use this project in your research, please cite it as follows:
+
+Kieran Patrick Somers. (2025). PESO: A Simple Potential Energy Surface Diagram Generator, Zenodo DOI: [https://doi.org/10.5281/zenodo.14633225](https://doi.org/10.5281/zenodo.14633225)
 
 ## License
 

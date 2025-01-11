@@ -1,0 +1,11 @@
+section: pes
+name    energy  type    reactant    product
+M1  0.0 MIN nan nan
+M2  10  MIN nan nan
+M3  20  MIN nan nan
+M4  20  MIN nan nan
+TS1 20  TS  M1  M2
+TS2 25  TS  M2  M3
+TS3 35  TS  M3  M4
+TS4 45  TS  M1  M2
+TS5 55  TS  M2  M4

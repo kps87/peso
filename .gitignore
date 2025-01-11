@@ -169,3 +169,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Ignore files
+colormaps.txt
+fonts.txt
+inputs/font-test*
+outputs/font-test*
+outputs/*
+utils/art/*

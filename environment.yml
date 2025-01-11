@@ -1,0 +1,11 @@
+name: peso
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - matplotlib
+  - click
+  - numpy
+  - pandas
+  - scipy
+prefix: /path/to/directory

@@ -1,0 +1,17 @@
+section: pes
+name    energy  type    reactant    product
+M1  0.0 MIN nan nan
+M2  50  MIN nan nan
+M3+M4  60  MIN nan nan
+TS1 50  TS  M1  M2
+TS2 70  TS  M2  M3+M4
+
+section: reactionFormat
+TS1 color #FF5733 linestyle -- label false
+TS1 linewidth 2
+
+section: global
+pad-bimolecular true
+resolution 600
+label-font DejaVu Serif
+colormap brg

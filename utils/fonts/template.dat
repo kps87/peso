@@ -1,0 +1,8 @@
+section: pes
+name    energy  type    reactant    product
+M1  0.0 MIN nan nan
+M2  10  MIN nan nan
+TS1 20  TS  M1  M2
+
+section: global
+resolution 400

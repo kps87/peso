@@ -81,6 +81,9 @@ class Plotter:
         self._surface = surface
         self._output_file = output_file
         self._fopts = fopts
+        self._energy_range = None
+        self._vertical_annotation_offset = None
+        self._annotations = []
 
     @property
     def surface(self) -> PES:
@@ -105,6 +108,30 @@ class Plotter:
     @fopts.setter
     def fopts(self, fopts: dict[str, any]):
         self._fopts = fopts
+
+    @property
+    def energy_range(self) -> int:
+        return self._energy_range
+
+    @energy_range.setter
+    def energy_range(self, energy_range: int):
+        self._energy_range = energy_range
+
+    @property
+    def vertical_annotation_offset(self):
+        return self._vertical_annotation_offset
+
+    @vertical_annotation_offset.setter
+    def vertical_annotation_offset(self, vertical_annotation_offset: float):
+        self._vertical_annotation_offset = vertical_annotation_offset
+
+    @property
+    def annotations(self) -> list[any]:
+        return self._annotations
+
+    @annotations.setter
+    def annotations(self, annotations: list[any]):
+        self._annotations = annotations
 
     def get_format_option(self, rxn: Reaction, option: str) -> str | None:
         return (
@@ -167,6 +194,33 @@ class Plotter:
 
         return " ".join([name, "(" + str(np.round(sp.energy, 1)) + ")"])
 
+    def get_energy_range(self):
+        if self.energy_range is None:
+            sps = self.surface.get_stationary_points()
+            min = np.min([sp.energy for sp in sps])
+            max = np.max([sp.energy for sp in sps])
+            range = 25 * round((max - min) / 25)
+            self.energy_range = 25 if range == 0 else range
+            logger.info("Energy range = {}".format(self.energy_range))
+        return self.energy_range
+
+    def get_vertical_annotation_offset(self):
+        if self.vertical_annotation_offset is None:
+            range = self.get_energy_range()
+            offset = np.abs(0.15 * (range))
+            self.vertical_annotation_offset = offset
+            logger.info(
+                "Vertical annotation offset = {}".format(
+                    self.vertical_annotation_offset
+                )
+            )
+        return self.vertical_annotation_offset
+
+    def add_annotation(self, annotation: any):
+        annotations = self.annotations
+        annotations.append(annotation)
+        self.annotations = annotations
+
     def get_image_resolution(self) -> int:
         res = self.get_global_option("resolution")
         if res is not None:
@@ -188,37 +242,52 @@ class Plotter:
     def add_minima_labels(self, axis: any) -> None:
         for sp in self.surface.minima:
             sp: StationaryPoint
-            axis.annotate(
-                self.get_stationary_point_label(sp),
-                (sp.rxn_coord, sp.energy),
-                xytext=(0, -30),  # vertical offset.
-                textcoords="offset points",
-                ha="center",
-                va="bottom",
-                arrowprops=dict(arrowstyle="->", color="k"),
-                fontfamily=self.get_label_font(),
-            )
+            if self.show_label(sp):
+                annotation = axis.annotate(
+                    self.get_stationary_point_label(sp),
+                    (sp.rxn_coord, sp.energy),
+                    xytext=(
+                        sp.rxn_coord,
+                        sp.energy - self.get_vertical_annotation_offset(),
+                    ),
+                    textcoords="data",
+                    ha="center",
+                    va="bottom",
+                    arrowprops=dict(arrowstyle="->", color="k"),
+                    fontfamily=self.get_label_font(),
+                )
+                self.add_annotation(annotation)
 
     def add_ts_labels(self, axis: any) -> None:
         for sp in self.surface.ts:
             sp: StationaryPoint
             if self.show_label(sp):
-                axis.annotate(
+                annotation = axis.annotate(
                     self.get_stationary_point_label(sp),
                     (sp.rxn_coord, sp.energy),
-                    xytext=(0, +30),  # vertical offset.
-                    textcoords="offset points",
+                    xytext=(
+                        sp.rxn_coord,
+                        sp.energy + self.get_vertical_annotation_offset(),
+                    ),
+                    textcoords="data",
                     ha="center",
                     va="top",
                     arrowprops=dict(arrowstyle="->", color="k"),  # Arrow properties
                     fontfamily=self.get_label_font(),
                 )
+                self.add_annotation(annotation)
 
     def set_limits(self, axis: any) -> None:
-        xvals = [x.rxn_coord for x in self.surface.get_stationary_points()]
-        yvals = [x.energy for x in self.surface.get_stationary_points()]
-        axis.set_xlim([np.min(xvals) - 0.5, np.max(xvals) + 0.5])
-        axis.set_ylim([np.min(yvals) - 30, np.max(yvals) + 30])
+        xcoords = [s.rxn_coord for s in self.surface.get_stationary_points()]
+        ycoords = [s.energy for s in self.surface.get_stationary_points()]
+        labels = [text.get_position() for text in axis.texts]
+        if labels is not None:
+            xcoords += [i[0] for i in labels]
+            ycoords += [i[1] for i in labels]
+        ymin = np.min(ycoords) - 0.1 * self.get_energy_range()
+        ymax = np.max(ycoords) + 0.1 * self.get_energy_range()
+        axis.set_xlim([np.min(xcoords) - 0.5, np.max(xcoords) + 0.5])
+        axis.set_ylim([ymin, ymax])
 
     def save_image(self, fig: any) -> None:
         PlotterUtils.save_image(

@@ -1,0 +1,22 @@
+section: pes
+name    energy  type    reactant    product
+M1 -950 MIN nan nan
+M2 25 MIN nan nan
+M3 20 MIN nan nan
+M4 300 MIN nan nan
+TS1 800 TS M1 M2
+TS2 26 TS M2 M3
+TS3 1035 TS M3 M4
+
+section: reactionFormat
+M1 label false
+M2 label false
+M3 label false
+M4 label false
+TS1 label false
+TS2 label false
+TS3 label false
+
+section: global
+resolution 600
+colormap brg

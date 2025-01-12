@@ -29,8 +29,9 @@ class PESGridEnhancer:
         )
         x_grid: dict[str, float] = {}
 
-        [cls.add_minima_to_grid(x_grid, rxn) for rxn in surface.reactions]
+        [cls.add_minima_to_grid(x_grid, species) for species in surface.minima]
         [cls.add_ts_to_grid(x_grid, rxn) for rxn in surface.reactions]
+
         stationary_points = set()
         [
             stationary_points.add(x)
@@ -41,10 +42,9 @@ class PESGridEnhancer:
             sp.rxn_coord = x_grid[sp.name]
 
     @classmethod
-    def add_minima_to_grid(cls, x_grid: dict[str, float], rxn: Reaction):
-        for species in [rxn.reac, rxn.prod]:
-            if species.name not in x_grid:
-                x_grid[species.name] = len(x_grid.keys()) + 1
+    def add_minima_to_grid(cls, x_grid: dict[str, float], species: StationaryPoint):
+        if species.name not in x_grid:
+            x_grid[species.name] = len(x_grid.keys()) + 1
 
     @classmethod
     def add_ts_to_grid(cls, x_grid: dict[str, float], rxn: Reaction):

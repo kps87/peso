@@ -192,10 +192,12 @@ optionN valueN
 ```
 
 A number of global options are currently supported:
-1. pad-bimolecular: adds spaces around "+" symbols for bimolecular reactions
-2. resolution: defines the output image resolution, defaults to 1200 dpi. Lower resolutions are useful for testing with a high resolution suitable for publications.
-3. label-font: allows users to [control the font applied](#fonts) to labels for minima and ts. Note that spaces **are** allowed in the font definition.
-4. colormap: allows users to select from a list of [pre-configured colormaps](#global-colormaps) 
+1. **pad-bimolecular**: adds spaces around "+" symbols for bimolecular reactions
+2. **resolution**: defines the output image resolution, defaults to 1200 dpi. Lower resolutions are useful for testing with a high resolution suitable for publications.
+3. **label-font**: allows users to [control the font applied](#fonts) to labels for minima and ts. Note that spaces **are** allowed in the font definition.
+4. **label-loc**: allows users to apply a simple in-line labelling system rather using the global default of offset labels with energies
+5. **show-labels**: disables all labels if included and set to false
+6. **colormap**: allows users to select from a list of [pre-configured colormaps](#global-colormaps) 
 
 ```
 section: global
@@ -203,6 +205,8 @@ pad-bimolecular true
 resolution 600
 label-font DejaVu Serif
 colormap brg
+label-loc inline
+show-labels false
 ```
 
 Examples are provided in ```./inputs/```.
@@ -247,7 +251,7 @@ python peso.py run-all
 ```
 
 ## PES Logic
-Drawing a potential surface requires defining the *x* and *y* coordinates of *stationary points*, and then connecting those coordinates *via*
+Drawing a potential energy surface requires defining the *x* and *y* coordinates of *stationary points*, and then connecting those coordinates *via*
 some arbitrary curve.
 
 Since the *y* coordinates are fixed by the input energies, initially we must define some logic to place *stationary points* along the *x*-axis (the reaction coordinates).

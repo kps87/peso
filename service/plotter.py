@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+
 from domain.pes import PES, StationaryPoint, Reaction
 from service.logging import Log
 from matplotlib import cm
@@ -216,11 +217,6 @@ class Plotter:
             )
         return self.vertical_annotation_offset
 
-    def add_annotation(self, annotation: any):
-        annotations = self.annotations
-        annotations.append(annotation)
-        self.annotations = annotations
-
     def get_image_resolution(self) -> int:
         res = self.get_global_option("resolution")
         if res is not None:
@@ -239,11 +235,28 @@ class Plotter:
                 linewidth=self.get_line_width(rxn),
             )
 
-    def add_minima_labels(self, axis: any) -> None:
+    def add_labels(self, axis: any) -> None:
+
+        if (
+            self.has_global_option("show-labels")
+            and self.get_global_option("show-labels").lower() == "false"
+        ):
+            return None
+
+        if (
+            self.has_global_option(option="label-loc")
+            and self.get_global_option(option="label-loc") == "inline"
+        ):
+            self.add_inline_labels(axis)
+        else:
+            self.add_offset_minima_labels(axis)
+            self.add_offset_ts_labels(axis)
+
+    def add_offset_minima_labels(self, axis: any) -> None:
         for sp in self.surface.minima:
             sp: StationaryPoint
             if self.show_label(sp):
-                annotation = axis.annotate(
+                axis.annotate(
                     self.get_stationary_point_label(sp),
                     (sp.rxn_coord, sp.energy),
                     xytext=(
@@ -256,13 +269,12 @@ class Plotter:
                     arrowprops=dict(arrowstyle="->", color="k"),
                     fontfamily=self.get_label_font(),
                 )
-                self.add_annotation(annotation)
 
-    def add_ts_labels(self, axis: any) -> None:
+    def add_offset_ts_labels(self, axis: any) -> None:
         for sp in self.surface.ts:
             sp: StationaryPoint
             if self.show_label(sp):
-                annotation = axis.annotate(
+                axis.annotate(
                     self.get_stationary_point_label(sp),
                     (sp.rxn_coord, sp.energy),
                     xytext=(
@@ -275,7 +287,29 @@ class Plotter:
                     arrowprops=dict(arrowstyle="->", color="k"),  # Arrow properties
                     fontfamily=self.get_label_font(),
                 )
-                self.add_annotation(annotation)
+
+    def add_inline_labels(self, axis: any):
+        name_pos_map = {}
+        cmap = self.get_colormap()
+        ts_cmap = {}
+        for species in self.surface.minima + self.surface.ts:
+            name_pos_map[species.name] = (species.rxn_coord, species.energy)
+        for rxn in self.surface.reactions:
+            ts_cmap[rxn.ts.name] = cmap[rxn]
+
+        for species in name_pos_map:
+
+            color = ts_cmap[species] if species in ts_cmap else "k"
+
+            axis.annotate(
+                species,
+                name_pos_map[species],
+                fontsize=8,
+                color=color,
+                ha="center",
+                va="center",
+                bbox=dict(facecolor="white", edgecolor=color, boxstyle="round,pad=0.1"),
+            )
 
     def set_limits(self, axis: any) -> None:
         xcoords = [s.rxn_coord for s in self.surface.get_stationary_points()]
@@ -305,7 +339,6 @@ class Plotter:
         )
 
         self.plot_reactions(axis)
-        self.add_minima_labels(axis)
-        self.add_ts_labels(axis)
+        self.add_labels(axis)
         self.set_limits(axis)
         self.save_image(fig)

@@ -1,0 +1,28 @@
+section: pes
+name    energy  type    reactant    product
+M1 -1000 MIN nan nan
+M2 -500 MIN nan nan
+M3 0 MIN nan nan
+M4 500 MIN nan nan
+M5 750 MIN nan nan
+M6 1000 MIN nan nan
+TS1 -250 TS M1 M2
+TS2 250 TS M1 M3
+TS3 750 TS M1 M4
+TS4 1000 TS M1 M5
+TS5 1250 TS M1 M6
+TS6 250 TS M2 M3
+TS7 750 TS M2 M4
+TS8 1000 TS M2 M5
+TS9 1250 TS M2 M6
+TS10 750 TS M3 M4
+TS11 1000 TS M3 M5
+TS12 1250 TS M3 M6
+TS13 1000 TS M4 M5
+TS14 1250 TS M4 M6
+TS15 1250 TS M5 M6
+
+section: global
+resolution 600
+colormap brg
+label-loc inline

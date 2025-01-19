@@ -1,4 +1,5 @@
 import os
+
 from service.logging import Log
 
 logger = Log.get_logger(os.path.basename(__file__))

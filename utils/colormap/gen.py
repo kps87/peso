@@ -1,4 +1,5 @@
 import os
+
 from service.parser import PlainTextParser
 from service.writer import PlainTextWriter
 from utils.colormap.list import run as get_cmaps

@@ -1,7 +1,6 @@
 import os
-from service.logging import Log
-from matplotlib import font_manager
 
+from service.logging import Log
 from service.plotter import PlotterUtils
 from service.writer import PlainTextWriter
 

@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 from typing import Self
+
+import numpy as np
+import pandas as pd
 
 
 class StationaryPoint:

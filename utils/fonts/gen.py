@@ -1,6 +1,8 @@
 import os
-from service.logging import Log
+
 from matplotlib import font_manager
+
+from service.logging import Log
 from service.parser import PlainTextParser
 from service.writer import PlainTextWriter
 

@@ -1,10 +1,12 @@
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-
-from domain.pes import PES, StationaryPoint, Reaction
-from service.logging import Log
 from matplotlib import cm
+
+from domain.options import Option, OptionsManager
+from domain.pes import PES, Reaction, StationaryPoint
+from service.logging import Log
 
 logger = Log.get_logger(os.path.basename(__file__))
 
@@ -78,10 +80,10 @@ class PlotterUtils:
 
 
 class Plotter:
-    def __init__(self, surface: PES, output_file: str, fopts: dict[str, any]):
+    def __init__(self, surface: PES, output_file: str, options: OptionsManager):
         self._surface = surface
         self._output_file = output_file
-        self._fopts = fopts
+        self._options = options
         self._energy_range = None
         self._vertical_annotation_offset = None
         self._annotations = []
@@ -103,12 +105,12 @@ class Plotter:
         self._output_file = output_file
 
     @property
-    def fopts(self) -> dict[str, any]:
-        return self._fopts
+    def options(self) -> OptionsManager:
+        return self._options
 
-    @fopts.setter
-    def fopts(self, fopts: dict[str, any]):
-        self._fopts = fopts
+    @options.setter
+    def options(self, options: OptionsManager):
+        self._options = options
 
     @property
     def energy_range(self) -> int:
@@ -134,64 +136,49 @@ class Plotter:
     def annotations(self, annotations: list[any]):
         self._annotations = annotations
 
-    def get_format_option(self, rxn: Reaction, option: str) -> str | None:
-        return (
-            self.fopts[rxn.ts.name][option]
-            if rxn.ts.name in self.fopts and option in self.fopts[rxn.ts.name]
-            else None
-        )
-
-    def has_global_option(self, option: str) -> bool:
-        return "global" in self.fopts and option in self.fopts["global"]
-
-    def get_global_option(self, option: str) -> str | None:
-        if self.has_global_option(option):
-            return self.fopts["global"][option]
-        return None
-
     def get_colormap(self):
-        cmap = self.get_global_option("colormap")
+        cmap = self.options.get_global_option(Option.COLORMAP)
+        cmap = cmap.value.lower() if cmap is not None else None
         logger.info("Plotting with colormap: {}".format(cmap))
         return PlotterUtils.colormap_dictionary_from_array(
             array=self.surface.reactions, mtype=cmap
         )
 
     def get_line_color(self, rxn: Reaction, cmap: dict) -> str:
-        color = self.get_format_option(rxn, "color")
-        return cmap[rxn] if color is None else color
+        color = self.options.get_keyword_option(rxn.ts.name, Option.COLOR)
+        return cmap[rxn] if color is None else color.value
 
     def get_line_style(self, rxn: Reaction) -> str:
-        ls = self.get_format_option(rxn, "linestyle")
-        return "-" if ls is None else ls
+        ls = self.options.get_keyword_option(rxn.ts.name, Option.LINESTYLE)
+        return "-" if ls is None else ls.value
 
     def get_line_width(self, rxn: Reaction) -> float:
-        lw = self.get_format_option(rxn, "linewidth")
-        return 1.0 if lw is None else lw
+        lw = self.options.get_keyword_option(rxn.ts.name, Option.LINEWIDTH)
+        return 1.0 if lw is None else lw.value
 
     def show_label(self, sp: StationaryPoint) -> bool:
-        label = (
-            self.fopts[sp.name]["label"]
-            if sp.name in self.fopts and "label" in self.fopts[sp.name]
-            else "true"
-        )
-        return label.strip().lower() == "true"
+        label = self.options.get_keyword_option(sp.name, Option.LABEL)
+        label = label.value.strip().lower() if label is not None else "true"
+        return False if label == "false" else True
 
     def get_label_font(self) -> str:
-        if self.has_global_option("label-font"):
-            return self.get_global_option("label-font")
-        return "DejaVu Sans"
+        font = self.options.get_global_option(Option.LABEL_FONT)
+        return font.value if font is not None else "DejaVu Sans"
 
     def get_stationary_point_label(self, sp: StationaryPoint) -> str:
 
         name = sp.name
 
-        if (
-            self.has_global_option("pad-bimolecular")
-            and self.get_global_option("pad-bimolecular").lower() == "true"
-            and "+" in name
-        ):
-            reac, prod = name.split("+")
-            name = " ".join([reac, "+", prod])
+        pad_bimol = self.options.get_global_option(Option.PAD_BIMOLECULAR)
+        pad_bimol = (
+            True
+            if pad_bimol is not None and pad_bimol.value.lower() == "true"
+            else False
+        )
+
+        if pad_bimol and "+" in name:
+            species = name.split("+")
+            name = " ".join(species)
 
         return " ".join([name, "(" + str(np.round(sp.energy, 1)) + ")"])
 
@@ -208,7 +195,7 @@ class Plotter:
     def get_vertical_annotation_offset(self):
         if self.vertical_annotation_offset is None:
             range = self.get_energy_range()
-            offset = np.abs(0.15 * (range))
+            offset = np.abs(0.15 * range)
             self.vertical_annotation_offset = offset
             logger.info(
                 "Vertical annotation offset = {}".format(
@@ -218,9 +205,9 @@ class Plotter:
         return self.vertical_annotation_offset
 
     def get_image_resolution(self) -> int:
-        res = self.get_global_option("resolution")
+        res = self.options.get_global_option(Option.RESOLUTION)
         if res is not None:
-            return int(res)
+            return int(res.value)
         return 1200
 
     def plot_reactions(self, axis: any) -> None:
@@ -237,16 +224,18 @@ class Plotter:
 
     def add_labels(self, axis: any) -> None:
 
-        if (
-            self.has_global_option("show-labels")
-            and self.get_global_option("show-labels").lower() == "false"
-        ):
+        show_labels = self.options.get_global_option(Option.SHOW_LABELS)
+        show_labels = (
+            True
+            if show_labels is None or show_labels.value.lower() != "false"
+            else False
+        )
+        if show_labels is False:
             return None
 
-        if (
-            self.has_global_option(option="label-loc")
-            and self.get_global_option(option="label-loc") == "inline"
-        ):
+        label_loc = self.options.get_global_option(Option.LABEL_LOCATION)
+
+        if label_loc is not None and label_loc.value.lower() == "inline":
             self.add_inline_labels(axis)
         else:
             self.add_offset_minima_labels(axis)

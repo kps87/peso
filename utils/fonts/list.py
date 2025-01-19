@@ -1,6 +1,8 @@
 import os
-from service.logging import Log
+
 from matplotlib import font_manager
+
+from service.logging import Log
 from service.writer import PlainTextWriter
 
 logger = Log.get_logger(os.path.basename(__file__))

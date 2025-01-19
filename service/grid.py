@@ -2,9 +2,10 @@ import os
 from typing import Tuple
 
 import numpy as np
-from service.logging import Log
-from domain.pes import Reaction, PES, StationaryPoint
 from scipy.interpolate import interp1d
+
+from domain.pes import PES, Reaction, StationaryPoint
+from service.logging import Log
 
 logger = Log.get_logger(os.path.basename(__file__))
 

@@ -2,6 +2,8 @@ import os.path
 from typing import Tuple
 
 import pandas as pd
+
+from domain.options import OptionDefinition, OptionsManager
 from service.logging import Log
 
 logger = Log.get_logger(os.path.basename(__file__))
@@ -54,55 +56,29 @@ class PESInputFileParser:
         return files
 
     @classmethod
-    def process_reaction_format(cls, options: dict[str, any]) -> dict[str, any]:
+    def process_reaction_format(cls, options: dict[str, any]) -> list[OptionDefinition]:
 
-        fopts = {}
+        opt_mgr = OptionsManager(options=[])
         if "reactionFormat" in options:
             lines = list(
                 filter(lambda x: any(y.isalnum() for y in x), options["reactionFormat"])
             )
-            for line in lines:
-                rxn, *options = line.split()
-                options = {
-                    options[i]: options[i + 1] for i in range(0, len(options), 2)
-                }
-                if rxn not in fopts:
-                    fopts[rxn] = options
-                else:
-                    fopts[rxn].update(options)
 
-        for rxn in fopts:
-            for opt in fopts[rxn]:
-                logger.info(
-                    "Custom format specification for reaction {}: {}={}".format(
-                        rxn, opt, fopts[rxn][opt]
-                    )
-                )
-        return fopts
+            opt_mgr.keyword_options_from_list(lines)
+        return opt_mgr.options
 
     @classmethod
-    def process_global_format_options(cls, options: dict[str, any]) -> dict[str, any]:
+    def process_global_format_options(
+        cls, options: dict[str, any]
+    ) -> list[OptionDefinition]:
 
-        fopts = {"global": {}}
+        opt_mgr = OptionsManager(options=[])
         if "global" in options:
             lines = list(
                 filter(lambda x: any(y.isalnum() for y in x), options["global"])
             )
-            for line in lines:
-                options = line.split()
-                if options[0] == "label-font":
-                    options = {"label-font": " ".join(options[1:])}
-                else:
-                    options = {
-                        options[i]: options[i + 1] for i in range(0, len(options), 2)
-                    }
-                fopts["global"].update(options)
-
-        for opt in fopts["global"]:
-            logger.info(
-                "Global format specification: {}={}".format(opt, fopts["global"][opt])
-            )
-        return fopts
+            opt_mgr.global_options_from_list(lines)
+        return opt_mgr.options
 
     @classmethod
     def parse_sections(cls, content: list[str]) -> dict:
@@ -118,7 +94,7 @@ class PESInputFileParser:
                     sections[section].append(line)
         return sections
 
-    def read_input_file(self, filename: str) -> Tuple[pd.DataFrame, dict[str, any]]:
+    def read_input_file(self, filename: str) -> Tuple[pd.DataFrame, OptionsManager]:
         if os.path.isfile(filename):
             logger.info("Reading input file {}".format(filename))
             self.parser.filename = filename
@@ -130,10 +106,11 @@ class PESInputFileParser:
                 columns=sections["pes"][0].split(),
             )
             df["energy"] = df["energy"].astype(float)
-            fopts = PESInputFileParser.process_reaction_format(sections)
+            reac_opts = PESInputFileParser.process_reaction_format(sections)
             global_opts = PESInputFileParser.process_global_format_options(sections)
-            fopts.update(global_opts)
-            return df, fopts
+            opt_mgr = OptionsManager(options=reac_opts + global_opts)
+            opt_mgr.log()
+            return df, opt_mgr
         else:
             logger.fatal("Filename {} is not present".format(filename))
             exit()
